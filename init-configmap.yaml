@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+  namespace: default
+data:
+  init.sql: |
+    -- 1. 기존 스키마 정리 (순서 중요: 의존성 있는 테이블부터 삭제)
+    DROP TABLE IF EXISTS report CASCADE;
+    DROP TABLE IF EXISTS lab_assignment CASCADE;
+    DROP TABLE IF EXISTS lab CASCADE;
+    DROP TABLE IF EXISTS challenge CASCADE;
+    DROP TABLE IF EXISTS users CASCADE;
+    DROP TYPE IF EXISTS role_type;
+
+    -- 2. Enum 타입 생성
+    CREATE TYPE role_type AS ENUM ('HACKER', 'DEVELOPER');
+
+    -- 3. Users 테이블 (사용자)
+    CREATE TABLE users (
+        id BIGSERIAL PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL, -- 실제로는 Bcrypt 등으로 암호화해야 함
+        nickname VARCHAR(50),
+        role role_type NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- 4. Lab 테이블 (실습 환경)
+    CREATE TABLE lab (
+        id BIGSERIAL PRIMARY KEY,
+        title VARCHAR(100) NOT NULL,
+        description TEXT,
+        deploy_url VARCHAR(255),
+        is_active BOOLEAN DEFAULT TRUE,
+        developer_id BIGINT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_developer FOREIGN KEY (developer_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    -- 5. Lab Assignment 테이블 (수강 내역)
+    CREATE TABLE lab_assignment (
+        id BIGSERIAL PRIMARY KEY,
+        user_id BIGINT NOT NULL,
+        lab_id BIGINT NOT NULL,
+        assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        CONSTRAINT fk_lab FOREIGN KEY (lab_id) REFERENCES lab(id) ON DELETE CASCADE,
+        UNIQUE(user_id, lab_id) -- 중복 수강 방지
+    );
+
+    -- 6. Report 테이블 (취약점 리포트)
+    CREATE TABLE report (
+        id BIGSERIAL PRIMARY KEY,
+        title VARCHAR(100) NOT NULL,
+        content TEXT NOT NULL,
+        severity VARCHAR(20) CHECK (severity IN ('High', 'Medium', 'Low')),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        author_id BIGINT NOT NULL,
+        lab_id BIGINT NOT NULL,
+        CONSTRAINT fk_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+        CONSTRAINT fk_report_lab FOREIGN KEY (lab_id) REFERENCES lab(id) ON DELETE CASCADE
+    );
+
+    -- 7. Challenge 테이블 (템플릿)
+    CREATE TABLE challenge (
+        id BIGSERIAL PRIMARY KEY,
+        title VARCHAR(100) NOT NULL,
+        image_url VARCHAR(255) NOT NULL,
+        description TEXT
+    );
+
+    -- ==========================================
+    -- 8. 초기 더미 데이터 (테스트용)
+    -- ==========================================
+    
+    -- 유저 생성 (비번은 예시로 평문 사용)
+    INSERT INTO users (username, password, nickname, role) VALUES 
+    ('dev_kim', '1234', 'KimDev', 'DEVELOPER'),
+    ('hacker_lee', '1234', 'LeeHacker', 'HACKER');
+
+    -- 랩 생성 (dev_kim이 생성)
+    INSERT INTO lab (title, description, deploy_url, developer_id) VALUES 
+    ('SQL Injection Lab', '기초적인 SQLi 실습입니다.', 'http://192.168.0.200/lab/1', 1);
+
+    -- 랩 수강 신청 (hacker_lee가 신청)
+    INSERT INTO lab_assignment (user_id, lab_id) VALUES (2, 1);
+
+    -- 리포트 제출 (hacker_lee가 제출)
+    INSERT INTO report (title, content, severity, author_id, lab_id) VALUES 
+    ('로그인 우회 취약점 발견', 'admin'' -- 입력시 로그인 됨', 'High', 2, 1);
