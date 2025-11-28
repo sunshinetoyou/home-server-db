@@ -16,11 +16,11 @@ jobs:
         run: |
           echo "📂 Deploying Database..."
           # 현재 폴더에 있는 yaml 파일들을 순서대로 적용
-          sudo kubectl apply -f pvc.yaml
-          sudo kubectl apply -f deployment.yaml
-          sudo kubectl apply -f service.yaml
+          kubectl apply -f pvc.yaml
+          kubectl apply -f deployment.yaml
+          kubectl apply -f service.yaml
           
           echo "✅ Deployment Applied!"
           
           # 배포 상태 확인
-          sudo kubectl rollout status deployment/postgres-db
+          kubectl rollout status deployment/postgres-db
