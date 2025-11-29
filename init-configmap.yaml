@@ -63,11 +63,12 @@ data:
     );
 
     -- 7. Challenge 테이블 (템플릿)
-    CREATE TABLE challenge (
-        id BIGSERIAL PRIMARY KEY,
-        title VARCHAR(100) NOT NULL,
-        image_url VARCHAR(255) NOT NULL,
-        description TEXT
+    CREATE TABLE IF NOT EXISTS challenge (
+    id BIGSERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    image_url VARCHAR(255) NOT NULL, -- 도커 명령어 또는 이미지 이름
+    description TEXT,                -- 설명 또는 JSON 설정값
+    type VARCHAR(50) DEFAULT 'EXAMPLE' -- 'EXAMPLE'(예제) or 'RUNTIME'(실행환경)
     );
 
     -- ==========================================
