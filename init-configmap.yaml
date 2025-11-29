@@ -74,10 +74,11 @@ data:
     -- 8. 초기 더미 데이터 (테스트용)
     -- ==========================================
     
-    -- 유저 생성 (비번은 예시로 평문 사용)
+    -- 유저 생성 
+    -- 비밀번호 '1234'를 BCrypt로 암호화한 값으로 변경했습니다.
     INSERT INTO users (username, password, nickname, role) VALUES 
-    ('dev_kim', '1234', 'KimDev', 'DEVELOPER'),
-    ('hacker_lee', '1234', 'LeeHacker', 'HACKER');
+    ('dev_kim', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'KimDev', 'DEVELOPER'),
+    ('hacker_lee', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'LeeHacker', 'HACKER');
 
     -- 랩 생성 (dev_kim이 생성)
     INSERT INTO lab (title, description, deploy_url, developer_id) VALUES 
