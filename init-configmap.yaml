@@ -8,7 +8,7 @@ data:
     -- ==========================================
     -- 1. 기존 스키마 정리 (의존성 역순 삭제)
     -- ==========================================
-    DROP TABLE IF EXISTS comments CASCADE;
+    DROP TABLE IF EXISTS comment CASCADE;
     DROP TABLE IF EXISTS report CASCADE;
     DROP TABLE IF EXISTS lab_assignment CASCADE;
     DROP TABLE IF EXISTS lab CASCADE;
@@ -89,8 +89,8 @@ data:
         CONSTRAINT fk_report_lab FOREIGN KEY (lab_id) REFERENCES lab(id) ON DELETE CASCADE
     );
 
-    -- (6) Comments 테이블 (리포트 댓글 / 토론)
-    CREATE TABLE comments (
+    -- (6) comment 테이블 (리포트 댓글 / 토론)
+    CREATE TABLE comment (
         id BIGSERIAL PRIMARY KEY,
         report_id BIGINT NOT NULL,
         author_id BIGINT NOT NULL,
@@ -127,5 +127,5 @@ data:
     ('로그인 우회 취약점 발견', 'admin'' -- 입력시 로그인 됨', 'HIGH', 'PENDING', 2, 1);
 
     -- 댓글 작성
-    INSERT INTO comments (report_id, author_id, content) VALUES
+    INSERT INTO comment (report_id, author_id, content) VALUES
     (1, 1, '제 환경에서는 재현이 안되는데 스크린샷 첨부 가능하신가요?');
