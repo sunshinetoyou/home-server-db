@@ -93,15 +93,16 @@ data:
     ('로그인 우회 취약점 발견', 'admin'' -- 입력시 로그인 됨', 'High', 2, 1);
 
     -- 챌린지 템플릿 데이터 (DVWA 단독 추가)
-    INSERT INTO challenge (title, image_url, description) VALUES 
+    INSERT INTO challenge (title, image_url, description, type) VALUES 
     (
         'DVWA (Docker)', 
         'docker run --rm -it -p 80:80 vulnerables/web-dvwa', 
-        'PHP/Mysql 기반 실습 환경입니다.'
+        'PHP/Mysql 기반 실습 환경입니다. 터미널에 명령어를 입력하여 실행하세요.',
+        'EXAMPLE'
     ),
     (
-    'Node.js 18 (Simple)', 
-    'node:18-slim', 
-    '{"port": 8080, "mount": "/app", "cmd": "node server.js"}', 
-    'RUNTIME'
+        'Node.js 18 (Simple)', 
+        'node:18-slim', 
+        '{"port": 8080, "mount": "/app", "cmd": "node server.js"}', 
+        'RUNTIME'
     );
