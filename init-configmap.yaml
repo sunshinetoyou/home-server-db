@@ -56,7 +56,7 @@ data:
         -- [3-Tier 이미지 정보]
         fe_image VARCHAR(255) NOT NULL, -- Frontend Image
         be_image VARCHAR(255) NOT NULL, -- Backend Image
-        db_image VARCHAR(255) NOT NULL, -- Database Image (or Nullable if SQLite)
+        db_image VARCHAR(255), -- Database Image (or Nullable if SQLite)
         
         deploy_url VARCHAR(255), -- 배포 후 생성된 URL
 
