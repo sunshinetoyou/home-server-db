@@ -8,7 +8,7 @@ data:
     -- ==========================================
     -- 1. 기존 스키마 정리 (의존성 역순 삭제)
     -- ==========================================
-    DROP TABLE IF EXISTS comment CASCADE;
+    DROP TABLE IF EXISTS comment CASCADE;    -- [확정] Java Entity에 맞춰 단수형
     DROP TABLE IF EXISTS report CASCADE;
     DROP TABLE IF EXISTS lab_assignment CASCADE;
     DROP TABLE IF EXISTS lab CASCADE;
@@ -33,13 +33,16 @@ data:
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
-    -- (2) Images 테이블
+    -- (2) Images 테이블 (챌린지 템플릿)
     CREATE TABLE images (
         id BIGSERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
-        image_url VARCHAR(255) NOT NULL, -- Java: imageUrl
+        image_url VARCHAR(255) NOT NULL,
         description TEXT,
-        type VARCHAR(50) DEFAULT 'EXAMPLE'
+        type VARCHAR(50) DEFAULT 'EXAMPLE',
+        
+        -- [New] 템플릿별 기본 포트 (예: 80, 8080)
+        default_port INTEGER DEFAULT 80 NOT NULL
     );
 
     -- (3) Lab 테이블 (실습 환경)
@@ -49,6 +52,13 @@ data:
         developer_id BIGINT NOT NULL,
         title VARCHAR(100) NOT NULL,
         description TEXT,
+        
+        -- [New] 개발자가 제출한 실제 도커 이미지
+        docker_image VARCHAR(255),
+        
+        -- [New] 최종 결정된 컨테이너 포트
+        container_port INTEGER,
+
         deploy_url VARCHAR(255),
         is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -78,18 +88,17 @@ data:
         content TEXT NOT NULL,
         severity VARCHAR(20) CHECK (severity IN ('HIGH', 'MEDIUM', 'LOW')), 
         
-        -- [확정] Java Enum: ReportStatus와 대소문자까지 일치 (PENDING, IN_PROGRESS, RESOLVED, REJECTED)
         status VARCHAR(20) DEFAULT 'PENDING' 
             CHECK (status IN ('PENDING', 'IN_PROGRESS', 'RESOLVED', 'REJECTED')), 
             
-        developer_comment TEXT, -- 개발자 피드백
+        developer_comment TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         
         CONSTRAINT fk_report_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
         CONSTRAINT fk_report_lab FOREIGN KEY (lab_id) REFERENCES lab(id) ON DELETE CASCADE
     );
 
-    -- (6) comment 테이블 (리포트 댓글 / 토론)
+    -- (6) Comment 테이블 (단수형 유지)
     CREATE TABLE comment (
         id BIGSERIAL PRIMARY KEY,
         report_id BIGINT NOT NULL,
@@ -110,22 +119,22 @@ data:
     ('dev_kim', '$2b$12$LWmlYY9Ihyx94FMAWdTI7OxAbzoOj168QVkLIgsFvxhkziLpK5MzS', 'KimDev', 'DEVELOPER'),
     ('hacker_lee', '$2b$12$2ymZJaFQAiCFEN3AEDdGi.Gc9tsXE6SK1fMYNKcR1soe8k/tYV4Dm', 'LeeHacker', 'HACKER');
 
-    -- 챌린지 템플릿 데이터 (images 테이블에 삽입)
-    INSERT INTO images (title, image_url, description, type) VALUES 
-    ('DVWA (Docker)', 'docker run --rm -it -p 80:80 vulnerables/web-dvwa', 'PHP/Mysql 기반 실습 환경', 'EXAMPLE'),
-    ('Node.js 18 (Simple)', 'node:18-slim', '{"port": 8080}', 'RUNTIME');
+    -- 챌린지 템플릿 데이터 (default_port 추가됨)
+    INSERT INTO images (title, image_url, description, type, default_port) VALUES 
+    ('DVWA (Docker)', 'https://github.com/vulnerables/web-dvwa', 'PHP/Mysql 기반 실습 환경', 'EXAMPLE', 80),
+    ('Node.js 18 (Simple)', 'https://github.com/nodejs/docker-node', '{"cmd": "npm start"}', 'RUNTIME', 8080);
 
-    -- 랩 생성 (img_id 사용)
-    INSERT INTO lab (title, description, deploy_url, developer_id, img_id) VALUES 
-    ('SQL Injection Lab', '기초적인 SQLi 실습입니다.', 'http://192.168.0.200/lab/1', 1, 1);
+    -- 랩 생성 (docker_image, container_port 추가됨)
+    INSERT INTO lab (title, description, deploy_url, developer_id, img_id, docker_image, container_port) VALUES 
+    ('SQL Injection Lab', '기초적인 SQLi 실습입니다.', 'http://192.168.0.200/lab/1', 1, 1, 'dev_kim/dvwa-custom:v1', 80);
 
     -- 랩 수강 신청
     INSERT INTO lab_assignment (user_id, lab_id) VALUES (2, 1);
 
-    -- 리포트 제출 (status, severity Enum 값 사용)
+    -- 리포트 제출
     INSERT INTO report (title, content, severity, status, author_id, lab_id) VALUES 
     ('로그인 우회 취약점 발견', 'admin'' -- 입력시 로그인 됨', 'HIGH', 'PENDING', 2, 1);
 
-    -- 댓글 작성
+    -- 댓글 작성 (테이블명 comment)
     INSERT INTO comment (report_id, author_id, content) VALUES
     (1, 1, '제 환경에서는 재현이 안되는데 스크린샷 첨부 가능하신가요?');
