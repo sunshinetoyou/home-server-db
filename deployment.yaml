@@ -1,49 +1,49 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgres-db
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres
-  template:
-    metadata:
-      labels:
-        app: postgres
-    spec:
-      containers:
-      - name: postgres
-        image: postgres:15-alpine # 공식 이미지 사용
-        ports:
-        - containerPort: 5432
-        env:
-        - name: POSTGRES_USER
-          valueFrom:
-            secretKeyRef:
-              name: db-secret
-              key: user
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: db-secret
-              key: password
-        - name: POSTGRES_DB
-          valueFrom:
-            secretKeyRef:
-              name: db-secret
-              key: dbname
-        volumeMounts:
-        - mountPath: /var/lib/postgresql/data
-          name: postgres-storage
-        - mountPath: /docker-entrypoint-initdb.d/init.sql
-          subPath: init.sql            # 👈 ConfigMap의 'data' 키 이름과 똑같아야 함!
-          name: db-init-volume         # 👈 아래 volumes의 이름과 똑같아야 함!
-      volumes:
-      - name: postgres-storage
-        persistentVolumeClaim:
-          claimName: postgres-pvc
-      - name: db-init-volume           # 👈 위 volumeMounts의 name과 똑같아야 함!
-        configMap:
-          name: postgres-init-script   # 👈 init-configmap.yaml의 metadata.name과 똑같아야 함!
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: postgres-db
+#   namespace: default
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: postgres
+#   template:
+#     metadata:
+#       labels:
+#         app: postgres
+#     spec:
+#       containers:
+#       - name: postgres
+#         image: postgres:15-alpine # 공식 이미지 사용
+#         ports:
+#         - containerPort: 5432
+#         env:
+#         - name: POSTGRES_USER
+#           valueFrom:
+#             secretKeyRef:
+#               # name: db-secret
+#               key: user
+#         - name: POSTGRES_PASSWORD
+#           valueFrom:
+#             secretKeyRef:
+#               name: db-secret
+#               key: password
+#         - name: POSTGRES_DB
+#           valueFrom:
+#             secretKeyRef:
+#               name: db-secret
+#               key: dbname
+#         volumeMounts:
+#         - mountPath: /var/lib/postgresql/data
+#           name: postgres-storage
+#         - mountPath: /docker-entrypoint-initdb.d/init.sql
+#           subPath: init.sql            # 👈 ConfigMap의 'data' 키 이름과 똑같아야 함!
+#           name: db-init-volume         # 👈 아래 volumes의 이름과 똑같아야 함!
+#       volumes:
+#       - name: postgres-storage
+#         persistentVolumeClaim:
+#           claimName: postgres-pvc
+#       - name: db-init-volume           # 👈 위 volumeMounts의 name과 똑같아야 함!
+#         configMap:
+#           name: postgres-init-script   # 👈 init-configmap.yaml의 metadata.name과 똑같아야 함!

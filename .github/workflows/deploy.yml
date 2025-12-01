@@ -1,58 +1,58 @@
-name: Deploy DB to K3s
+# name: Deploy DB to K3s
 
-on:
-  # 1. 코드가 푸시되면 자동 실행
-  push:
-    branches: [ "main" ]
+# on:
+#   # 1. 코드가 푸시되면 자동 실행
+#   push:
+#     branches: [ "main" ]
   
-  # 2. GitHub 웹에서 수동으로 실행할 수 있게 버튼 추가
-  workflow_dispatch:
-    inputs:
-      reset_db:
-        description: '🔥 DB를 초기화 하시겠습니까? (데이터 삭제됨)'
-        required: false
-        default: false
-        type: boolean
+#   # 2. GitHub 웹에서 수동으로 실행할 수 있게 버튼 추가
+#   workflow_dispatch:
+#     inputs:
+#       reset_db:
+#         description: '🔥 DB를 초기화 하시겠습니까? (데이터 삭제됨)'
+#         required: false
+#         default: false
+#         type: boolean
 
-jobs:
-  deploy:
-    runs-on: self-hosted # 우리 집 서버
+# jobs:
+#   deploy:
+#     runs-on: self-hosted # 우리 집 서버
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
 
-      # 🌟 [핵심] DB 초기화 로직
-      - name: Reset Database (If requested)
-        run: |
-          # 조건 1: 수동 실행시 체크박스를 켰거나
-          # 조건 2: 커밋 메시지에 [RESET-DB] 가 포함되어 있거나
-          if [[ "${{ inputs.reset_db }}" == "true" || "${{ contains(github.event.head_commit.message, '[RESET-DB]') }}" == "true" ]]; then
-            echo "🚨 DB 초기화 요청 감지! 기존 DB와 데이터를 삭제합니다..."
+#       # 🌟 [핵심] DB 초기화 로직
+#       - name: Reset Database (If requested)
+#         run: |
+#           # 조건 1: 수동 실행시 체크박스를 켰거나
+#           # 조건 2: 커밋 메시지에 [RESET-DB] 가 포함되어 있거나
+#           if [[ "${{ inputs.reset_db }}" == "true" || "${{ contains(github.event.head_commit.message, '[RESET-DB]') }}" == "true" ]]; then
+#             echo "🚨 DB 초기화 요청 감지! 기존 DB와 데이터를 삭제합니다..."
             
-            # DB 서버 종료 (없어도 에러 안 나게 --ignore-not-found 옵션 추가)
-            kubectl delete deployment postgres-db --ignore-not-found=true
+#             # DB 서버 종료 (없어도 에러 안 나게 --ignore-not-found 옵션 추가)
+#             kubectl delete deployment postgres-db --ignore-not-found=true
             
-            # 🌟 데이터 저장소(PVC) 삭제 -> 데이터 증발 & init.sql 재실행 조건 충족
-            kubectl delete pvc postgres-pvc --ignore-not-found=true
+#             # 🌟 데이터 저장소(PVC) 삭제 -> 데이터 증발 & init.sql 재실행 조건 충족
+#             kubectl delete pvc postgres-pvc --ignore-not-found=true
             
-            echo "⏳ 삭제가 완료될 때까지 10초 대기..."
-            sleep 10
-          else
-            echo "✅ DB 초기화 요청 없음. 기존 데이터를 유지합니다."
-          fi
+#             echo "⏳ 삭제가 완료될 때까지 10초 대기..."
+#             sleep 10
+#           else
+#             echo "✅ DB 초기화 요청 없음. 기존 데이터를 유지합니다."
+#           fi
 
-      - name: Apply Kubernetes Manifests
-        run: |
-          echo "📂 Deploying Database..."
+#       - name: Apply Kubernetes Manifests
+#         run: |
+#           echo "📂 Deploying Database..."
           
-          # ConfigMap (init.sql) 먼저 갱신
-          kubectl apply -f init-configmap.yaml
+#           # ConfigMap (init.sql) 먼저 갱신
+#           kubectl apply -f init-configmap.yaml
           
-          # PVC, Deployment, Service 배포
-          kubectl apply -f pvc.yaml
-          kubectl apply -f deployment.yaml
-          kubectl apply -f service.yaml
+#           # PVC, Deployment, Service 배포
+#           kubectl apply -f pvc.yaml
+#           kubectl apply -f deployment.yaml
+#           kubectl apply -f service.yaml
           
-          echo "✅ Deployment Applied!"
-          kubectl rollout status deployment/postgres-db
+#           echo "✅ Deployment Applied!"
+#           kubectl rollout status deployment/postgres-db
